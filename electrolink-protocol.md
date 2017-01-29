@@ -13,7 +13,7 @@
 
 ## GPIO
 
-### pinMode(int pinFnc)
+### pinMode(int[] pin, int pinFnc)
 
 Configures pin to it's specific function input/output or define it as interface.
 Pin parameter is always an array. In that way it's possible to put multiple pins in some specific mode with one instruction or to declare pins of some specific interface. 
@@ -27,6 +27,7 @@ Pin parameter is always an array. In that way it's possible to put multiple pins
 
 Parameters:
 
+`int[] pin` - array of pin numbers
 `int pinFnc` - function number
 
 Putting GPIOs in specific interface mode.
@@ -48,11 +49,12 @@ JSON:
 }
 ```
 
-### write(int value)
+### write(int[] pin, int value)
 Sets GPIO output high or low in the case where previously pinMode was declared to OUT.
 
 Parameters:
 
+`int[] pin` - array of pin numbers
 `int value` - digital output value: 0 - LOW, 1 - HIGH
 
 JSON:
@@ -64,8 +66,11 @@ JSON:
 }
 ```
 
-### read()
+### read(int[] pin)
 Reads digital state of the GPIO pin in the case where previously pinMode was declared to IN, IN_PULL_UP or IN_PULL_DOWN
+
+Parameters:
+`int[] pin` - array of pin numbers
 
 JSON:
 ```
@@ -86,9 +91,12 @@ JSON:
 ```
 
 ## Analog (ADC)
-### adcRead()
+### adcRead(int[] pin)
 
 Reads ADC value of the GPIO pin in the case where previously pinMode was declared to ADC
+
+Parameters:
+`int[] pin` - array of pin numbers
 
 JSON:
 ```
@@ -110,12 +118,13 @@ JSON:
 
 ## PWM
 
-### pwmWrite(int value)
+### pwmWrite(int[] pin, int value)
 
 Sets pwm value on the GPIO pin in the case where previously pinMode was declared to PWM.
 
 Parameters:
 
+`int[] pin` - array of pin numbers
 `int value` - PWM value
 
 JSON:
@@ -129,39 +138,37 @@ JSON:
 
 
 ## SPI
-### spiWrite(int value)
+### spiWrite(int iName, int value)
 
 Sends value to SPI bus. SPI interface needs to be previously set with pinMode function
 
 Parameters:
 
-`int NAME` - SPI interface name. This is not pin number, this is name that has been given in pinMode SPI declaration
-
+`int iName` - SPI interface name. This is not pin number, this is name that has been given in pinMode SPI declaration
 `int value` - 8bit value 
 
 JSON:
 ```
 {
-  "pin": <NAME>
+  "pin": <iName>
   "method": "spiWrite",
   "params": [ <value> ]
 }
 ```
 
-### spiRead(int nBytes)
+### spiRead(int iName, int nBytes)
 
 Reads values from SPI bus. SPI interface needs to be previously set with pinMode function
 
 Parameters:
 
-`int NAME` - SPI interface name. This is not pin number, this is name that has been given in pinMode SPI declaration
-
+`int iName` - SPI interface name. This is not pin number, this is name that has been given in pinMode SPI declaration
 `int nBytes` - number of bytes that will be read
 
 JSON:
 ```
 {
-  "pin": <NAME>
+  "pin": <iName>
   "method": "spiRead",
   "params": [ <nBytes> ]
 }
@@ -171,24 +178,8 @@ Returns message
 JSON:
 ```
 {
-  "pin": <NAME>
+  "pin": <iName>
   "method": "spiRead",
   "value": [<byte0>, <byte1>,...]
-}
-```
-
-logPinID)
-
-Parameters:
-
-`int analogPinID` - analog pin number (0-7), corresponds to ADC0-ADC7 pins.
-
-Returns message where value is 10 bit ADC read value.
-
-JSON:
-```
-{
-  "method": "analogRead",
-  "params": [<analogPinID>]
 }
 ```
