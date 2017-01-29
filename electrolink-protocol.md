@@ -2,146 +2,182 @@
 
 | SUBSYS              | FNC                                                 |
 |:--------------------|:----------------------------------------------------|
-| GPIO                | **pinFunction**(int pinId, int pinFnc)              |
-|                     | **pinMode**(int pinId, int pinMode)                 |
-|                     | **digitalWrite**(int pinId, int value)              |
-|                     | **digitalRead**(int pinId)                          |
-| INT                 | **attachInterrupt**(int intId, int pinId, int mode) |
-|                     | **detachInterrupt**(int intId)                      |
-| ADC                 | **analogRead**(int analogPinID)                     |
-|                     | **pulseIn**(int pinId, int level, int timeout)      |
-| PWM                 | **pwmStart**(int pwmNb, int period)                 |
-|                     | **pwmSet**(int pwmNb, int channel, int highTime)    |
-|                     | **pwmStop**(int pwmNb)                              |
-| SPI                 | **spiStart**(int spiNb, int divider, int mode)      |
-|                     | **spiTransfer**(int spiNb, byte[] data, int rsp)    |
-|                     | **spiStop**(int spiNb)                              |
-| I2C                 | **i2cStart**()                                      |
-|                     | **i2cTransfer**(int addr, byte[] wrData, int rdLen) |
-|                     | **i2cStop**()                                       |
-| UART                | **uartStart**(int baudrate)                         |
-|                     | **uartSend**(byte[] wrData)                           |
-|                     | **uartReceive**(int rdLen)                          |
-|                     | **uartStop**()
-| SYSTEM              | **registerWrite**(int regAddr, int val)             |
-|                     | **registerRead**(int regAddr)                       |
-|                     | **getDeviceInfo**()                                 |
-
+| GPIO                | **pinMode**(int pinFnc)                             |
+|                     | **write**(int value)                                |
+|                     | **read**()                                          |
+| ADC                 | **adcRead**()                                       |
+| PWM                 | **pwmWrite**(int value)                             |
+| SPI                 | **spiWrite**(int value)                             |
+|                     | **spiRead**(int nBytes)                             |
 
 
 ## GPIO
 
-### pinFunction(int pinId, int pinFnc)
+### pinMode(int pinFnc)
 
-Configures pin `pinId` to primary or secondary function. Secondary pin function should be enabled before calling any of the secondary functions (e.g. analog, pwm, spi, i2c).
+Configures pin to it's specific function input/output or define it as interface.
+Pin parameter is always an array. In that way it's possible to put multiple pins in some specific mode with one instruction or to declare pins of some specific interface. 
+
+| IN/OUT              | Params                                              |
+|:--------------------|:----------------------------------------------------|
+| OUT                 | 0                                                   |
+| IN                  | 1                                                   |
+| IN_PULL_UP          | 2                                                   |
+| IN_PULL_DOWN        | 3                                                   |
 
 Parameters:
 
-`int pinId` - pin number (0-33)
 `int pinFnc` - function number
 
-By default GPIO is always the primary function. Some pins don't have secondary functions - that is their secondary function is also GPIO.
+Putting GPIOs in specific interface mode.
+
+| Interface           | Params                              | Pin declaration order | 
+|:--------------------|:------------------------------------|:----------------------|
+| ADC                 | 4                                   | None                  | 
+| PWM                 | 5, FREQUENCY, DUTY_CYCLE            | None                  | 
+| SPI                 | 6, NAME, BAUDRATE, POLARITY, PHASE  | MISO, MOSI, SCK       | 
+| I2C                 | 7, NAME, FREQUENCY                  | SCL, SDA              | 
+| UART                | 8, NAME, BAUDRATE                   | TX, RX                | 
 
 JSON:
 ```
 {
-  "method": "pinFunction",
-  "params": [<pinId>, <pinFnc>]
-}
-```
-
-### pinMode(int pinId, int pinMode)
-Configures GPIO pin mode. Pin should be set to GPIO function before configuring its GPIO mode.
-
-Parameters:
-
-`int pinId` - pin number (0-33)
-
-`int pinMode` - pin mode: 0 - input (high Z), 1 - output, 2 - input (pull down), 4 - input (pull up)
-
-JSON:
-```
-{
+  "pin": [<pinId0>, <pinId1>, ...],
   "method": "pinMode",
-  "params": [<pinId>, <pinMode>]
+  "params": [<pinFnc>]
 }
 ```
 
-### digitalWrite(int pinId, int value)
-Sets GPIO output high or low.
+### write(int value)
+Sets GPIO output high or low in the case where previously pinMode was declared to OUT.
 
 Parameters:
-
-`int pinId` - pin number (0-33)
 
 `int value` - digital output value: 0 - LOW, 1 - HIGH
 
 JSON:
 ```
 {
-  "method": "digitalWrite"
-  "params": [<pinId>, <value>]
+  "pin": [<pinId0>, <pinId1>, ...],
+  "method": "write"
+  "params": [<value0>, <value1>]
 }
 ```
 
-### digitalRead (int pinId)
-Reads digital state of the GPIO pin.
-
-Parameters:
-
-`int pinId` - pin number (0-33)
-
-Returns message `digitalRead(int pinId, int value)`, where the value is 0 (LOW state) or 1 (HIGH state)
+### read()
+Reads digital state of the GPIO pin in the case where previously pinMode was declared to IN, IN_PULL_UP or IN_PULL_DOWN
 
 JSON:
 ```
 {
-  "method": "digitalRead",
-  "params": [<pinId>]
+  "pin": [<pinId>, <pinId>, ...],
+  "method": "read"
 }
 ```
-
-### attachInterrupt(int intId, int pinId, int mode)
-Attaches GPIO interrupt service to the specified pin. There is a total of 8 interrupts which can be attached to any pin. Interrupts can be configured to trigger at HIGH or LOW state or at RISING, FALLING or both edges. When the interrupt is triggered, device sends message `interrupt(int interruptId, int event)`, where event has the same meaning as mode.
-
-Parameters:
-
-`int intId` - interrupt number (0-7)
-
-`int pinId` - pin number (0-33)
-
-`int mode` - interrupt trigger mode:
- - `0` - LEVEL LOW
- - `1` - LEVEL HIGH
- - `2` - EDGE CHANGE
- - `3` - EDGE RISE
- - `4` - EDGE FALL
+Returns message 
 
 JSON:
 ```
 {
-  "method": "attachInterrupt",
-  "params": [<intId>, <pinId>, <mode>]
-}
-```
-
-### detachInterrupt(int intId)
-Detaches (disables) specified GPIO interrupt.
-
-Parameters:
-
-`int intId` - interrupt number (0-7)
-
-JSON:
-```
-{
-  "method": "detachInterrupt",
-  "params": [<intId>]
+  "pin": [<pinId0>, <pinId1>, ...],
+  "method": "read",
+  "value": [<pinId0_value>, <pinId1_value>,...]
 }
 ```
 
 ## Analog (ADC)
-### analogRead(int analogPinID)
+### adcRead()
+
+Reads ADC value of the GPIO pin in the case where previously pinMode was declared to ADC
+
+JSON:
+```
+{
+  "pin": [<pinId0>, <pinId1>, ...],
+  "method": "adcRead"
+}
+```
+Returns message 
+
+JSON:
+```
+{
+  "pin": [<pinId0>, <pinId1>, ...],
+  "method": "adcRead",
+  "value": [<pinId0_value>, <pinId1_value>,...]
+}
+```
+
+## PWM
+
+### pwmWrite(int value)
+
+Sets pwm value on the GPIO pin in the case where previously pinMode was declared to PWM.
+
+Parameters:
+
+`int value` - PWM value
+
+JSON:
+```
+{
+  "pin": [<pinId0>, <pinId1>, ...],
+  "method": "pwmWrite",
+  "params": [<value0>, <value1>,...]
+}
+```
+
+
+## SPI
+### spiWrite(int value)
+
+Sends value to SPI bus. SPI interface needs to be previously set with pinMode function
+
+Parameters:
+
+`int NAME` - SPI interface name. This is not pin number, this is name that has been given in pinMode SPI declaration
+
+`int value` - 8bit value 
+
+JSON:
+```
+{
+  "pin": <NAME>
+  "method": "spiWrite",
+  "params": [ <value> ]
+}
+```
+
+### spiRead(int nBytes)
+
+Reads values from SPI bus. SPI interface needs to be previously set with pinMode function
+
+Parameters:
+
+`int NAME` - SPI interface name. This is not pin number, this is name that has been given in pinMode SPI declaration
+
+`int nBytes` - number of bytes that will be read
+
+JSON:
+```
+{
+  "pin": <NAME>
+  "method": "spiRead",
+  "params": [ <nBytes> ]
+}
+```
+Returns message 
+
+JSON:
+```
+{
+  "pin": <NAME>
+  "method": "spiRead",
+  "value": [<byte0>, <byte1>,...]
+}
+```
+
+logPinID)
 
 Parameters:
 
